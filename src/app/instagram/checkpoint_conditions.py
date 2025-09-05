@@ -121,6 +121,13 @@ logged_in_condition = CheckpointCondition(
     cond_operator=operator.le,
 )
 
+logged_out_condition = CheckpointCondition(
+    checkpoint=Checkpoint.AccountLoggedOut,
+    xpath_item_len=0,
+    xpath_query="//div[@role='button' and text()='Log in'] | //div[text()='Log in'] | //div[text()='Sign up for Instagram'] | //button[text()='Log In']",
+    cond_operator=operator.gt,
+)
+
 is_page_private_condition = CheckpointCondition(
     checkpoint=Checkpoint.PageIsPrivate,
     xpath_item_len=0,
