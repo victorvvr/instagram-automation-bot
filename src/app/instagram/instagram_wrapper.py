@@ -5,12 +5,13 @@ from app.instagram.checkpoint_conditions import (
     CONDITIONS,
     logged_in_condition,
     is_page_private_condition,
+    logged_out_condition
 )
 from app.instagram.checkpoint_bypass import BYPASSES
 from app.instagram.actions import (
     create_follow_action,
     AcceptRequestsAction,
-    create_unfollow_action
+    create_unfollow_action,
 )
 from app.selenium_utils.utils import navigate_to
 from app.core.logger import get_logger
@@ -58,6 +59,14 @@ class InstagramWrapper:
         navigate_to(self.driver, f"https://instagram.com/{target}")
 
     def follow_action(self, target: str) -> Checkpoint:
+        # Navigate home page first
+        self.visit_user_page("")
+
+        # Check if user is logged out
+        if logged_out_condition.is_active(self.driver):
+            return Checkpoint.AccountLoggedOut
+
+        # Proceed as normal
         self.visit_user_page(target)
 
         cp = self.get_cp(True)
