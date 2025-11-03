@@ -102,14 +102,14 @@ CONDITIONS = {
         before_action_checkpoint=Checkpoint.AlreadyFollowedOrRequested,
         checkpoint=Checkpoint.PageRequested,
         xpath_item_len=0,
-        xpath_query="//div[text()='Requested']",
+        xpath_query="//div[text()='Requested'] | //h3[text()='Your request is pending']",
         cond_operator=operator.gt,
     ),
     Checkpoint.PageFollowedOrRequested: CheckpointCondition(
         before_action_checkpoint=Checkpoint.AlreadyFollowedOrRequested,
         checkpoint=Checkpoint.PageFollowedOrRequested,
         xpath_item_len=0,
-        xpath_query="//div[text()='Following'] | //div[text()='Requested']",
+        xpath_query="//div[text()='Following'] | //div[text()='Requested'] | //h3[text()='Your request is pending']",
         cond_operator=operator.gt,
     ),
 }
