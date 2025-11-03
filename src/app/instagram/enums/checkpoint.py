@@ -10,6 +10,7 @@ class Checkpoint(str, Enum):
     AccountSuspended = "AccountSuspended"
     AccountLoggedIn = "AccountLoggedIn"
     AccountLoggedOut = "AccountLoggedOut"
+    IncorrectPassword = "IncorrectPassword"
     SaveLoginInfo = "SaveLoginInfo"
     PageFollowedOrRequested = "PageFollowedOrRequested"
     PageFollowed = "PageFollowed"

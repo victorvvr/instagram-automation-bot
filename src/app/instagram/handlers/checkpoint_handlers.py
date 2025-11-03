@@ -118,6 +118,21 @@ class FollowBlockedHandler(CheckpointHandler):
         return False
 
 
+class IncorrectPasswordHandler(CheckpointHandler):
+    def handle(self, context: HandlerContext):
+        logger = get_logger()
+        logger.error("Incorrect password detected - cannot login")
+
+        self.shutdown_fn(
+            context.profile,
+            context.driver,
+            context.processed_targets,
+            BotStatus.AccountLoggedOut,
+        )
+        context.profile.set_status(AirtableProfileStatus.IncorrectPassword)
+        return False
+
+
 class AccountLoggedOutHandler(CheckpointHandler):
     def handle(self, context: HandlerContext):
         logger = get_logger()
@@ -222,6 +237,9 @@ def create_handler_registry(
             shutdown_fn, status_manager
         ),
         Checkpoint.AccountLoggedOut: AccountLoggedOutHandler(
+            shutdown_fn, status_manager
+        ),
+        Checkpoint.IncorrectPassword: IncorrectPasswordHandler(
             shutdown_fn, status_manager
         ),
         Checkpoint.SomethingWentWrongCheckpoint: SomethingWentWrongHandler(

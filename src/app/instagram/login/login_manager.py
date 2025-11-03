@@ -84,20 +84,55 @@ class LoginManager:
                 login_button.click()
                 time.sleep(7)
                 self.logger.info("Successfully clicked 'Log in' button")
-                return True
             except Exception as click_error:
                 self.logger.warning(f"Normal click failed, trying JavaScript: {click_error}")
                 try:
                     self.driver.execute_script("arguments[0].click();", login_button)
                     time.sleep(7)
                     self.logger.info("Successfully clicked with JavaScript")
-                    return True
                 except Exception as js_error:
                     self.logger.error(f"JavaScript click also failed: {js_error}")
                     return False
 
+            # Check for incorrect password error
+            if self._check_for_incorrect_password():
+                self.logger.error("Incorrect password error detected")
+                return False
+
+            return True
+
         except Exception as e:
             self.logger.error(f"Error clicking login button: {e}")
+            return False
+
+    def _check_for_incorrect_password(self) -> bool:
+        """Check if incorrect password error is displayed"""
+        try:
+            page_source = self.driver.page_source
+
+            # Check for incorrect password error messages
+            error_indicators = [
+                "Sorry, your password was incorrect" in page_source,
+                "Please double-check your password" in page_source,
+            ]
+
+            if any(error_indicators):
+                self.logger.error("Incorrect password error message found on page")
+                return True
+
+            # Also check for error elements
+            try:
+                error_elements = self.driver.find_elements(By.XPATH,
+                    "//*[contains(text(), 'Sorry, your password was incorrect')] | //*[contains(text(), 'Please double-check your password')]")
+                if error_elements:
+                    return True
+            except:
+                pass
+
+            return False
+
+        except Exception as e:
+            self.logger.error(f"Error checking for incorrect password: {e}")
             return False
 
     def _is_2fa_required(self) -> bool:

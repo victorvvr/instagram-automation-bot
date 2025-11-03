@@ -41,6 +41,12 @@ class CheckpointCondition:
 
 
 CONDITIONS = {
+    Checkpoint.IncorrectPassword: CheckpointCondition(
+        checkpoint=Checkpoint.IncorrectPassword,
+        xpath_item_len=0,
+        xpath_query="//*[contains(text(), 'Sorry, your password was incorrect')] | //*[contains(text(), 'Please double-check your password')]",
+        cond_operator=operator.gt,
+    ),
     Checkpoint.AccountLoggedOut: CheckpointCondition(
         checkpoint=Checkpoint.AccountLoggedOut,
         xpath_item_len=0,
