@@ -285,10 +285,13 @@ class InstagramService:
             )
             return False
 
-        # Submit retry with delay to delay_executor
-        delay_executor.submit(
-            self._retry_with_delay, profile, attempt_no, accept_requests, unfollow_users
+        # Use threading.Thread for retries to avoid bottleneck (matches old code behavior)
+        retry_thread = threading.Thread(
+            target=self._retry_with_delay,
+            args=(profile, attempt_no, accept_requests, unfollow_users),
+            daemon=True
         )
+        retry_thread.start()
 
         return True
 
@@ -300,7 +303,7 @@ class InstagramService:
         unfollow_users: bool = False,
     ):
         """Execute retry after appropriate delay"""
-        # Apply delay in the retry thread, not the calling thread
+        # Apply delay in the retry thread
         delay_seconds = RETRY_DELAYS.get(attempt_no, 0)
         if delay_seconds > 0:
             get_logger().info(
