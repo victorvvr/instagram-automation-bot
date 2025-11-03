@@ -154,7 +154,20 @@ class AccountLoggedOutHandler(CheckpointHandler):
         except Exception as e:
             logger.error(f"Error during automatic login attempt: {e}")
 
-        # If login failed, shut down
+        # Check if login failed due to incorrect password
+        from app.instagram.checkpoint_conditions import CONDITIONS
+        if CONDITIONS[Checkpoint.IncorrectPassword].is_active(context.driver):
+            logger.error("Login failed due to incorrect password")
+            self.shutdown_fn(
+                context.profile,
+                context.driver,
+                context.processed_targets,
+                BotStatus.AccountLoggedOut,
+            )
+            context.profile.set_status(AirtableProfileStatus.IncorrectPassword)
+            return False
+
+        # If login failed for other reasons, shut down
         logger.info("Login attempt failed - shutting down profile")
         self.shutdown_fn(
             context.profile,
