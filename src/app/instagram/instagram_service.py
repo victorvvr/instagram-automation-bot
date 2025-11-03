@@ -22,6 +22,7 @@ from app.core.constants import (
     PROFILE_START_DELAY,
     MAX_SHUTDOWN_ATTEMPTS,
     SHUTDOWN_RETRY_DELAY,
+    RETRY_DELAYS,
 )
 from app.instagram.handlers.checkpoint_handlers import (
     create_handler_registry,
@@ -263,21 +264,45 @@ class InstagramService:
         unfollow_users: bool = False,
     ) -> bool:
         get_logger().error(
-            f"Scheduling retry for profile {profile.username}"
+            f"Scheduling retry for profile {profile.username}, attempt {attempt_no}"
         )
 
         profile_status_manager.set_status(
             profile.ads_power_id, BotStatus.Retrying
         )
 
-        if delay_for_attempt(attempt_no) is False:
+        # Check if we've exceeded max retries
+        if attempt_no not in RETRY_DELAYS:
+            get_logger().error(
+                f"Max retries exceeded for profile {profile.username}"
+            )
             return False
 
+        # Submit retry with delay to delay_executor
         delay_executor.submit(
-            self.run_single, profile, attempt_no, accept_requests, unfollow_users
+            self._retry_with_delay, profile, attempt_no, accept_requests, unfollow_users
         )
 
         return True
+
+    def _retry_with_delay(
+        self,
+        profile: Profile,
+        attempt_no: int,
+        accept_requests: bool = False,
+        unfollow_users: bool = False,
+    ):
+        """Execute retry after appropriate delay"""
+        # Apply delay in the retry thread, not the calling thread
+        delay_seconds = RETRY_DELAYS.get(attempt_no, 0)
+        if delay_seconds > 0:
+            get_logger().info(
+                f"Waiting {delay_seconds}s before retry attempt {attempt_no} for {profile.username}"
+            )
+            time.sleep(delay_seconds)
+
+        # Now execute the actual retry
+        self.run_single(profile, attempt_no, accept_requests, unfollow_users)
 
     def run_single(
         self,
