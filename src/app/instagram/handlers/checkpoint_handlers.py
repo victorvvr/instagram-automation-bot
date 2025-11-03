@@ -5,6 +5,8 @@ from app.status.profile_status_manager import ProfileStatusManager
 from app.instagram.enums.checkpoint import Checkpoint
 from app.airtable.enums.profile_status import AirtableProfileStatus
 from app.status.profile_status_types import BotStatus
+from app.instagram.login import LoginManager, AppealHandler
+from app.core.logger import get_logger
 
 
 class AlreadyFollowedOrRequestedHandler(CheckpointHandler):
@@ -63,13 +65,32 @@ class FailedToFollowHandler(CheckpointHandler):
 
 class AccountSuspendedHandler(CheckpointHandler):
     def handle(self, context: HandlerContext):
+        logger = get_logger()
+        logger.info("Account suspended - attempting automatic appeal...")
+
+        try:
+            # Attempt automatic appeal
+            appeal_handler = AppealHandler(context.driver)
+
+            if appeal_handler.handle_suspended_account():
+                logger.info("Appeal process completed successfully!")
+                # Set status to waiting for appeal review
+                context.profile.set_status(AirtableProfileStatus.WaitingForAppeal)
+            else:
+                logger.error("Failed to complete appeal process")
+        except Exception as e:
+            logger.error(f"Error during automatic appeal attempt: {e}")
+
+        # Shut down after appeal attempt
+        logger.info("Appeal attempt completed - shutting down profile")
         self.shutdown_fn(
             context.profile,
             context.driver,
             context.processed_targets,
             BotStatus.Banned,
         )
-        context.profile.set_status(AirtableProfileStatus.Banned)
+        if context.profile.status != AirtableProfileStatus.WaitingForAppeal:
+            context.profile.set_status(AirtableProfileStatus.Banned)
         return False
 
 
@@ -99,6 +120,27 @@ class FollowBlockedHandler(CheckpointHandler):
 
 class AccountLoggedOutHandler(CheckpointHandler):
     def handle(self, context: HandlerContext):
+        logger = get_logger()
+        logger.info("Account logged out - attempting automatic re-login...")
+
+        try:
+            # Attempt automatic login
+            login_manager = LoginManager(context.driver)
+
+            # Handle cookie consent if needed
+            login_manager.handle_cookie_consent()
+
+            # Attempt login
+            if login_manager.handle_login_process():
+                logger.info("Successfully re-logged in! Continuing automation...")
+                return True  # Continue with automation
+            else:
+                logger.error("Failed to re-login automatically")
+        except Exception as e:
+            logger.error(f"Error during automatic login attempt: {e}")
+
+        # If login failed, shut down
+        logger.info("Login attempt failed - shutting down profile")
         self.shutdown_fn(
             context.profile,
             context.driver,

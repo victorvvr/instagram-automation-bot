@@ -15,6 +15,13 @@ cfg = {
         "apiUrl": os.getenv("ADSPOWER_API_URL"),
         "apiKey": os.getenv("ADSPOWER_API_KEY"),
     },
+    "daisysms": {
+        "apiKey": os.getenv("DAISYSMS_API_KEY"),
+        "baseUrl": os.getenv("DAISYSMS_BASE_URL", "https://daisysms.com/stubs/handler_api.php"),
+    },
+    "captcha": {
+        "apiKey": os.getenv("CAPTCHA_API_KEY"),
+    },
     "settings": {"logToFile": os.getenv("LOG_TO_FILE")},
 }
 

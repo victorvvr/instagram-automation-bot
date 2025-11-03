@@ -21,7 +21,7 @@ class CheckpointBypass:
 BYPASSES = {
     Checkpoint.SaveLoginInfo: CheckpointBypass("//*[text()='Save info']"),
     Checkpoint.AutomaticBehaviourSuspected: CheckpointBypass(
-        "//*[text()='Dismiss']"
+        "//*[@role='button' and @aria-label='Dismiss'] | //div[@role='button' and contains(@aria-label, 'Dismiss')] | //*[text()='Dismiss']"
     ),
     Checkpoint.SomethingWentWrongCheckpoint: CheckpointBypass(
         "//div[text()='Reload page']"
