@@ -64,7 +64,7 @@ CONDITIONS = {
     Checkpoint.AutomaticBehaviourSuspected: CheckpointCondition(
         checkpoint=Checkpoint.AutomaticBehaviourSuspected,
         xpath_item_len=0,
-        xpath_query="//*[text()='We suspect automated behavior on your account']",
+        xpath_query="//*[contains(text(), 'We suspect automated behavior')] | //*[text()='We suspect automated behavior on your account']",
         cond_operator=operator.gt,
     ),
     Checkpoint.BadProxy: CheckpointCondition(
