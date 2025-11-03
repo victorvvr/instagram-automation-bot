@@ -2,6 +2,7 @@ from app.airtable.models.profile import Profile
 from app.core.executor import get_executor, delay_executor, executor
 import traceback
 import time
+import threading
 from datetime import datetime, timezone
 from app.airtable.enums.profile_status import AirtableProfileStatus
 from selenium import webdriver
@@ -46,14 +47,20 @@ class InstagramService:
         for profile in profiles:
             profile_status_manager.schedule_profile(profile.ads_power_id)
 
-        profile_executor = get_executor(max_workers)
-
-        for profile in profiles:
+        # Use threading.Thread instead of ThreadPoolExecutor to start all profiles immediately
+        # This matches the behavior of the old main branch code
+        for i, profile in enumerate(profiles):
             get_logger().info(f"Starting profile: {profile.username}")
-            profile_executor.submit(
-                self.run_single, profile, 1, accept_requests, unfollow_users
+            thread = threading.Thread(
+                target=self.run_single,
+                args=(profile, 1, accept_requests, unfollow_users),
+                daemon=True
             )
-            time.sleep(PROFILE_START_DELAY)
+            thread.start()
+
+            # Small delay to stagger profile starts and avoid overwhelming AdsPower API
+            if i < len(profiles) - 1:  # Don't delay after the last profile
+                time.sleep(PROFILE_START_DELAY)
 
     def start_all(
         self,
