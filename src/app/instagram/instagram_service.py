@@ -278,13 +278,7 @@ class InstagramService:
             profile.ads_power_id, BotStatus.Retrying
         )
 
-        # Check if we've exceeded max retries
-        if attempt_no not in RETRY_DELAYS:
-            get_logger().error(
-                f"Max retries exceeded for profile {profile.username}"
-            )
-            return False
-
+        # Always retry - no max retry limit
         # Use threading.Thread for retries to avoid bottleneck (matches old code behavior)
         retry_thread = threading.Thread(
             target=self._retry_with_delay,
@@ -304,7 +298,8 @@ class InstagramService:
     ):
         """Execute retry after appropriate delay"""
         # Apply delay in the retry thread
-        delay_seconds = RETRY_DELAYS.get(attempt_no, 0)
+        # For attempts beyond the defined delays, use the max delay (300s)
+        delay_seconds = RETRY_DELAYS.get(attempt_no, 60)
         if delay_seconds > 0:
             get_logger().info(
                 f"Waiting {delay_seconds}s before retry attempt {attempt_no} for {profile.username}"
